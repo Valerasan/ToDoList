@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import Note from "./Note";
 import CreateArea from "./CreateArea";
-
+import { UserContext } from "./Contexts";
 
 
 function NotesBoard() {
 
+    const user = useContext(UserContext)
     const [notes, setNotes] = useState([]);
 
 

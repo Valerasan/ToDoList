@@ -1,6 +1,6 @@
 import React from "react";
 import HighlightIcon from "@mui/icons-material/Highlight";
-import Logout from "./Logout.";
+import Logout from "./Logout.jsx";
 
 function Header() {
   return (

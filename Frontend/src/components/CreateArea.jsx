@@ -2,6 +2,9 @@ import { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { Fab } from "@mui/material";
 import { Zoom } from "@mui/material";
+import axios from "axios";
+
+axios.defaults.withCredentials = true;
 
 function CreateArea(props) {
     const [isExpanded, setExpanded] = useState(false);
@@ -24,31 +27,27 @@ function CreateArea(props) {
     }
 
     async function submitNote(event) {
-        //
+    event.preventDefault();
+    console.log(note);
 
-        event.preventDefault();
-        console.log(note);
-        try {
-            const response = await fetch("http://localhost:3000/api/notes/add", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ note }),
-            });
+    try {
+        const response = await axios.post("http://localhost:3000/api/notes/add", {note}, {
+        headers: { "Content-Type": "application/json" }
+        });
 
+        setNote({
+        title: "",
+        content: "",
+        });
 
-            setNote({
-                title: "",
-                content: "",
-            });
+        console.log("New record: ", response.data);
 
-            //Add on main page new Note if write in DB was successful
-            const data = await response.json();
-            console.log("New record: ", data);
-            props.onAdd(data);
-        } catch (error) {
-            console.error(error);
-            console.log("Error");
-        }
+        // Add on main page new Note if write in DB was successful
+        props.onAdd(response.data);
+    } catch (error) {
+        console.error(error);
+        console.log("Error");
+    }
     }
 
     function expand() {

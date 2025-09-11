@@ -1,15 +1,9 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import cookieParser from "cookie-parser";
 import db from "./db.js"
-import cors from "cors";
 
 const router = express.Router();
-// router.use(express.json());
-// router.use(cookieParser());
-// router.use(cors({ origin: "http://localhost:5173", credentials: true }));
-
 
 const JWT_SECRET = process.env.JWT_SECRET_KEY;
 
@@ -35,12 +29,14 @@ router.post("/register", async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     try {
-        const result = await db.query(
-            "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email",
-            [email, hashed]
-        );
+        const [user] = await db("users")
+            .insert({
+                email,
+                password_hash: hashed,
+            })
+            .returning(["id", "email"]);
 
-        res.json(result.rows[0]);
+        res.json(user);
     } catch (err) {
         if (err.code === "23505") {
             return res.status(400).json({ error: "Email already exists" });
@@ -52,8 +48,7 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
-    const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
-    const user = result.rows[0];
+    const user =  await db("users").where({ email }).first();
 
     if (!user) return res.status(400).json({ error: "Invalid email or password" });
 

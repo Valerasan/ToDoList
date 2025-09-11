@@ -15,47 +15,49 @@ app.use(cookieParser());
 
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
-//need call last
 app.use("/auth", authRoutes);
 
 const PORT = 3000;
 
-
-
-app.get("/", (req, res) => {
-    res.send("Welocm to the node server!!");
-});
-
-app.get("/api/hello", (req, res) => {
-    res.json({ message: "Hello from the API" });
-});
-
 app.get("/api/notes", authenticateTokenCheck, async (req, res) => {
-
-    const result = await db.query("SELECT * FROM notes WHERE user_id = $1 ORDER BY id ASC ", [req.userId]);
+    const result = await db("notes")
+        .where("user_id", req.userId)
+        .orderBy("id", "asc");
     const notes = result.rows
-    res.json(notes);
+    res.json(result);
 });
 
 
 app.get("/auth/me", authenticateTokenCheck, async (req, res) => {
-    const result = await db.query("SELECT id, email FROM users WHERE id = $1", [req.userId]);
-    res.json(result.rows[0]);
+    const user = await db("users")
+        .select("id", "email")
+        .where({ id: req.userId })
+        .first();
+
+    res.json(user);
 });
 
 
 app.post("/api/notes/add", authenticateTokenCheck, async (req, res) => {
     const { note } = req.body;
-    const { rows } = await db.query("INSERT INTO notes (title, content, user_id) VALUES ($1, $2, $3) RETURNING *", [note.title, note.content, req.userId]);
-    console.log("add to SQl: ", rows[0]);
-    res.json(rows[0]);
+    const [newNote] = await db("notes")
+        .insert({
+            title: note.title,
+            content: note.content,
+            user_id: req.userId,
+        })
+        .returning("*");
+
+    console.log("add to SQl: ", newNote);
+    res.json(newNote);
 });
 
 
 app.delete("/api/notes/delete", authenticateTokenCheck, async (req, res) => {
     const { id } = req.body;
-    console.log("Delete ite:", id);
-    await db.query("DELETE FROM notes WHERE id=$1", [id])
+    await db("notes")
+        .where({ id })
+        .del();
     res.json({ ok: true });
 });
 
